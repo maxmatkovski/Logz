@@ -1,0 +1,32 @@
+opentelemetry-collector:
+  config:
+    exporters:
+      otlp/jaeger:
+        endpoint: jaeger:4317
+        tls:
+          insecure: true
+        sending_queue:
+          batch:
+      otlphttp/prometheus:
+        endpoint: http://prometheus:9090/api/v1/otlp
+        tls:
+          insecure: true
+        sending_queue:
+          batch:
+      opensearch:
+        logs_index: otel-logs
+        logs_index_time_format: "yyyy-MM-dd"
+        http:
+          endpoint: http://opensearch:9200
+          tls:
+            insecure: true
+      # Forward traces to logz.io APM collector in the monitoring namespace
+      otlp/logzio:
+        endpoint: logzio-apm-collector.monitoring.svc.cluster.local:4317
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          processors: [memory_limiter, resourcedetection, resource, transform, batch]
+          exporters: [otlp/jaeger, debug, spanmetrics, otlp/logzio]

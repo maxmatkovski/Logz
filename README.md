@@ -250,7 +250,29 @@ Node metrics (CPU, memory, disk, network) and Kubernetes workload metrics (pod s
 
 ### Traces
 
-The OTel Demo generates distributed traces across all services. The Jaeger waterfall above shows a single cart page load spanning 6 services and 16 spans — frontend-web → frontend-proxy → frontend → shipping → quote → currency. The traces token and collector are configured to ship these to logz.io APM.
+The OTel Demo generates distributed traces across all services. The Jaeger waterfall above shows a single cart page load spanning 6 services and 16 spans — frontend-web → frontend-proxy → frontend → shipping → quote → currency.
+
+Traces are visible and confirmed working in the **internal Jaeger UI** at `http://localhost:8080/jaeger/ui/`.
+
+The `logzio-apm-collector` was deployed and the OTel Demo's collector was configured to forward traces to it:
+
+```yaml
+logzio-apm-collector:
+  enabled: true
+  global:
+    logzioTracesToken: "<TRACES_TOKEN>"
+    logzioRegion: "us"
+```
+
+The OTel Demo's internal collector pipeline was extended to export to the APM collector alongside Jaeger:
+```yaml
+service:
+  pipelines:
+    traces:
+      exporters: [otlp/jaeger, debug, spanmetrics, otlp/logzio]
+```
+
+**Status:** Traces confirmed in local Jaeger. Logz.io APM showing "Welcome" screen — next debugging step would be verifying the tracing token is mapped to the correct logz.io tracing sub-account and confirming the APM collector is receiving spans via `kubectl logs`.
 
 ---
 
@@ -288,12 +310,24 @@ The OTel Demo generates distributed traces across all services. The Jaeger water
 
 ---
 
+## Sources Used
+
+- [OpenTelemetry Demo Helm Chart](https://open-telemetry.github.io/opentelemetry-helm-charts)
+- [logz.io Kubernetes Telemetry Collector docs](https://docs.logz.io/user-guide/log-shipping/telemetry-collector-k8s.html)
+- [logzio-helm GitHub](https://github.com/logzio/logzio-helm)
+- [logz.io APM Collector chart values](https://github.com/logzio/logzio-helm/tree/master/charts/logzio-apm-collector)
+- [minikube docs](https://minikube.sigs.k8s.io/docs/)
+- [Colima — container runtime for macOS](https://github.com/abiosoft/colima)
+
+---
+
 ## Repository Structure
 
 ```
 .
-├── README.md               # This document
-└── logzio-values.yaml      # Helm values used to deploy logzio-monitoring
+├── README.md                # This document
+├── logzio-values.yaml       # Helm values for logzio-monitoring chart
+└── otel-demo-values.yaml    # Helm values for OTel Demo (trace forwarding config)
 ```
 
 ---
