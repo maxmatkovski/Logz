@@ -1,0 +1,55 @@
+logs:
+  enabled: true
+
+# logzio-logs-collector: OTel-based DaemonSet that ships logs via logzio exporter
+logzio-logs-collector:
+  secrets:
+    logzioLogsToken: "bbbiYBKYcbDMIKVRftzCWnoBRmehHzIW"
+    logzioRegion: "us"
+    env_id: "minikube-otel-demo"
+  # Disable host port bindings to avoid conflict with OTel Demo collector agent
+  ports:
+    otlp:
+      hostPort: 0
+    otlp-http:
+      hostPort: 0
+    jaeger-compact:
+      hostPort: 0
+    jaeger-thrift:
+      hostPort: 0
+    jaeger-grpc:
+      hostPort: 0
+    zipkin:
+      hostPort: 0
+    metrics:
+      hostPort: 0
+
+# logzio-k8s-telemetry: OTel collector for metrics and traces
+logzio-k8s-telemetry:
+  metrics:
+    enabled: true
+  secrets:
+    MetricsToken: "XZivbnQtuHwKJgQZOExnvvFXSzBqJzYI"
+    TracesToken: "gIHUmGlZAyPldbdMdYtttfFnVzcUOBJF"
+    env_id: "minikube-otel-demo"
+    ListenerHost: "listener.logz.io"
+  # Disable host port bindings on the telemetry collector agent DaemonSet
+  ports:
+    otlp:
+      hostPort: 0
+    otlp-http:
+      hostPort: 0
+    jaeger-compact:
+      hostPort: 0
+    jaeger-binary:
+      hostPort: 0
+    jaeger-thrift:
+      hostPort: 0
+    jaeger-grpc:
+      hostPort: 0
+    zipkin:
+      hostPort: 0
+    metrics:
+      hostPort: 0
+    health-check:
+      hostPort: 0
