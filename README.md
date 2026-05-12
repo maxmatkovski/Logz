@@ -47,8 +47,6 @@ brew install colima docker kubectl helm minikube
 colima start --cpu 4 --memory 8 --disk 60
 ```
 
-> ![Colima start output](images/01-colima-start.png)
-
 ---
 
 ## Step 2 — Start the Kubernetes Cluster
@@ -58,8 +56,6 @@ minikube start --driver=docker --cpus=4 --memory=7000 --disk-size=40g
 ```
 
 minikube creates a single-node Kubernetes cluster inside the Colima VM. The `--driver=docker` flag uses the Docker socket provided by Colima.
-
-> ![minikube start output](images/02-minikube-start.png)
 
 **Verify:**
 ```bash
@@ -113,7 +109,7 @@ helm install otel-demo open-telemetry/opentelemetry-demo --namespace otel-demo
 | **prometheus** | Prometheus | Internal metrics scraper |
 | **opensearch** | OpenSearch | Internal log storage for Jaeger |
 
-> ![kubectl get pods -n otel-demo](images/03-otel-demo-pods.png)
+> ![kubectl get pods -n otel-demo](images/01-otel-demo-pods.png)
 
 **Access the app:**
 ```bash
@@ -121,14 +117,22 @@ kubectl port-forward -n otel-demo svc/frontend-proxy 8080:8080
 # Then open http://localhost:8080
 ```
 
-> ![OTel Demo frontend — telescope store](images/04-frontend.png)
+> ![OTel Demo frontend — telescope store](images/03-frontend-home.png)
+
+> ![Hot products page](images/04-products.png)
+
+> ![Product page with AI assistant](images/05-product-page.png)
+
+> ![Shopping cart with shipping calculated](images/06-cart.png)
 
 **Other built-in UIs:**
 - `http://localhost:8080/jaeger/ui/` — distributed traces
 - `http://localhost:8080/grafana/` — internal metrics dashboards
 - `http://localhost:8080/loadgen/` — load generator control panel
 
-> ![Jaeger UI showing traces](images/05-jaeger.png)
+> ![Jaeger trace list — 20 traces from frontend-web](images/07-jaeger-traces.png)
+
+> ![Jaeger waterfall — 6 services, 16 spans for a single cart page load](images/08-jaeger-waterfall.png)
 
 ---
 
@@ -154,7 +158,7 @@ The `logzio-helm/logzio-monitoring` chart deploys three collection components:
 
 See [`logzio-values.yaml`](logzio-values.yaml) for the full configuration.
 
-> ![kubectl get pods -n monitoring](images/06-monitoring-pods.png)
+> ![kubectl get pods -n monitoring](images/02-monitoring-pods.png)
 
 ---
 
@@ -215,17 +219,17 @@ kubectl patch secret logzio-secret -n monitoring \
 kubectl rollout restart daemonset -n monitoring
 ```
 
-> ![Collector logs showing "Everything is ready" with no errors](images/07-collector-ready.png)
-
 ---
 
 ## Step 6 — Verify Data in logz.io
 
 ### Logs
 
-30,000+ log entries received within minutes of fixing the token. All pods across the `otel-demo` namespace are represented, with full Kubernetes metadata attached to every entry.
+34,000+ log entries received within minutes. All pods across the `otel-demo` namespace are represented, with full Kubernetes metadata attached to every entry.
 
-> ![logz.io Logs dashboard showing 30K+ logs](images/08-logzio-logs.png)
+> ![logz.io Logs dashboard showing 34K+ logs](images/09-logzio-logs.png)
+
+> ![Expanded log entry showing full Kubernetes metadata fields](images/10-logzio-log-expanded.png)
 
 **How logs get to logz.io:**
 ```
@@ -240,19 +244,13 @@ logz.io Logs (OpenSearch)
 
 No code changes were needed in any application. Collection is purely infrastructure-level.
 
-> ![logz.io Logs filtered to a specific service](images/09-logzio-logs-filtered.png)
-
 ### Metrics
 
 Node metrics (CPU, memory, disk, network) and Kubernetes workload metrics (pod status, deployment health, resource usage) are shipping via the `logzio-monitoring-otel-collector` DaemonSet.
 
-> ![logz.io Metrics / Infrastructure dashboard](images/10-logzio-metrics.png)
-
 ### Traces
 
-The OTel Demo generates distributed traces across all services — a single user action like "place order" creates a trace spanning frontend → checkout → payment → fraud-detection → accounting. The traces token and collector are configured to ship these to logz.io APM.
-
-> ![logz.io Distributed Tracing showing traces](images/11-logzio-traces.png)
+The OTel Demo generates distributed traces across all services. The Jaeger waterfall above shows a single cart page load spanning 6 services and 16 spans — frontend-web → frontend-proxy → frontend → shipping → quote → currency. The traces token and collector are configured to ship these to logz.io APM.
 
 ---
 
